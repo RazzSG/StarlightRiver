@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Terraria;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Terraria;
+
+using StarlightRiver.Core;
+using StarlightRiver.Helpers;
 
 namespace StarlightRiver.Core
 {
@@ -26,7 +24,7 @@ namespace StarlightRiver.Core
         public void Draw()
         {
             if (Helper.OnScreen(pos - Main.screenPosition, tex.Size()))
-                Helper.DrawWithLighting(pos - Main.screenPosition, tex, Color.White * fadeTime);
+                LightingBufferRenderer.DrawWithLighting(pos - Main.screenPosition, tex, Color.White * fadeTime);
 
             if (fade) fadeTime -= 0.025f;
             else fadeTime += 0.025f;

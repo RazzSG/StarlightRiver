@@ -1,12 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Terraria;
 using Terraria.ModLoader;
 using static Terraria.ModLoader.ModContent;
+
+using StarlightRiver.Core;
+using StarlightRiver.Helpers;
+using StarlightRiver.Content.Buffs;
 
 namespace StarlightRiver.Core //TODO: Move this somewhere else? not sure.
 {
@@ -18,14 +18,14 @@ namespace StarlightRiver.Core //TODO: Move this somewhere else? not sure.
 
         public override void PostUpdate()
         {
-            if (!player.HasBuff(BuffType<Buffs.PrismaticDrown>())) //TODO: Better check later
+            if (!player.HasBuff(BuffType<PrismaticDrown>())) //TODO: Better check later
             {
                 if (boostCD > 0)
                 {
                     boostCD = 0;
                     player.UpdateRotation(0);
                 }
-                return; 
+                return;
             }
 
             player.maxFallSpeed = 0;
@@ -68,7 +68,7 @@ namespace StarlightRiver.Core //TODO: Move this somewhere else? not sure.
 
             if (player.controlJump && boostCD <= 0)
             {
-                boostCD = 90;              
+                boostCD = 90;
             }
 
             if (boostCD > 60)
@@ -78,8 +78,8 @@ namespace StarlightRiver.Core //TODO: Move this somewhere else? not sure.
                 var off = new Vector2((float)Math.Cos(angle) * 40, (float)Math.Sin(angle) * 20);
 
                 player.UpdateRotation(angle);
-                Dust.NewDustPerfect(player.Center + off.RotatedBy(player.fullRotation), DustType<Dusts.Starlight>());
-                Dust.NewDustPerfect(player.Center - off.RotatedBy(player.fullRotation), DustType<Dusts.Starlight>());
+                Dust.NewDustPerfect(player.Center + off.RotatedBy(player.fullRotation), DustType<Content.Dusts.Starlight>());
+                Dust.NewDustPerfect(player.Center - off.RotatedBy(player.fullRotation), DustType<Content.Dusts.Starlight>());
 
                 player.bodyFrame = new Rectangle(0, 0, 40, 56);
                 player.legFrame = new Rectangle(0, 0, 40, 56);

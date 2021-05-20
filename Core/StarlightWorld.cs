@@ -1,8 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
+using StarlightRiver.Content.Abilities.Purify;
+using StarlightRiver.Content.Abilities.Purify.TransformationHelpers;
+using StarlightRiver.Content.Bosses.SquidBoss;
+using StarlightRiver.Content.Tiles;
+using StarlightRiver.Content.Tiles.Balanced;
+using StarlightRiver.Content.Tiles.Permafrost;
 using StarlightRiver.Core;
 using StarlightRiver.Keys;
-using StarlightRiver.NPCs.Boss.SquidBoss;
 using StarlightRiver.NPCs.TownUpgrade;
 using System;
 using System.Collections.Generic;
@@ -15,13 +19,13 @@ using Terraria.ModLoader.IO;
 using Terraria.World.Generation;
 using static Terraria.ModLoader.ModContent;
 
-namespace StarlightRiver
+namespace StarlightRiver.Core
 {
     //Larger scale TODO: This is slowly becoming a godclass, we should really do something about that
     public partial class StarlightWorld : ModWorld
     {
         private static WorldFlags flags;
-        
+
         public static Vector2 RiftLocation;
 
         public static float rottime;
@@ -32,10 +36,10 @@ namespace StarlightRiver
         public static List<string> knownRecipies = new List<string>();
 
         //Players have a timer, can't the world get one synced one too?
-        public static int Timer;
+        public static int Timer; //I dont know why this is here and really dont want to risk removing it at this point.
 
         //Im so sorry for putting these here.  TODO: Move it later
-        public static Cutaway cathedralOverlay; 
+        public static Cutaway cathedralOverlay;
 
         //Voidsmith
         public static Dictionary<string, bool> TownUpgrades = new Dictionary<string, bool>();
@@ -44,6 +48,7 @@ namespace StarlightRiver
 
         public static Rectangle VitricBiome = new Rectangle();
 
+        public static int SquidNPCProgress = 0;
         public static Rectangle SquidBossArena = new Rectangle();
 
         //Handling Keys
@@ -60,7 +65,7 @@ namespace StarlightRiver
             writer.Write((int)flags);
 
             WriteRectangle(writer, VitricBiome);
-            WriteRectangle(writer, SquidBossArena);       
+            WriteRectangle(writer, SquidBossArena);
         }
 
         public override void NetReceive(BinaryReader reader)
@@ -92,7 +97,7 @@ namespace StarlightRiver
 
                 if (Main.tile[x, y].type == TileID.Dirt && Math.Abs(x - Main.maxTilesX / 2) >= Main.maxTilesX / 6)
                 {
-                    WorldGen.TileRunner(x, y, WorldGen.genRand.Next(10, 11), 1, TileType<Tiles.OreEbony>(), false, 0f, 0f, false, true);
+                    WorldGen.TileRunner(x, y, WorldGen.genRand.Next(10, 11), 1, TileType<OreEbony>(), false, 0f, 0f, false, true);
                 }
             }
         }
@@ -106,7 +111,7 @@ namespace StarlightRiver
 
         public override void PostUpdate()
         {
-            if (!Main.projectile.Any(proj => proj.type == ProjectileType<Projectiles.Ability.Purifier>()) && PureTiles != null)
+            if (!Main.projectile.Any(proj => proj.type == ProjectileType<Purifier>()) && PureTiles != null)
                 PureTiles.Clear();
 
             //SquidBoss arena
@@ -123,11 +128,14 @@ namespace StarlightRiver
             {
                 Tile tile = Framing.GetTileSafely((int)Main.LocalPlayer.Center.X / 16, (int)Main.LocalPlayer.Center.Y / 16);
 
-                cathedralOverlay.fade = 
-                    tile.wall == WallType<Tiles.Permafrost.AuroraBrickWall>() &&
-                    !Main.LocalPlayer.GetModPlayer<StarlightPlayer>().trueInvisible;
+                if (tile != null && cathedralOverlay != null)
+                {
+                    cathedralOverlay.fade =
+                        tile.wall == WallType<AuroraBrickWall>() &&
+                        !Main.LocalPlayer.GetModPlayer<StarlightPlayer>().trueInvisible;
 
-                cathedralOverlay.Draw();
+                    cathedralOverlay.Draw();
+                }
             }
         }
 
@@ -166,6 +174,7 @@ namespace StarlightRiver
                 ["VitricBiomePos"] = VitricBiome.TopLeft(),
                 ["VitricBiomeSize"] = VitricBiome.Size(),
 
+                ["SquidNPCProgress"] = SquidNPCProgress,
                 ["SquidBossArenaPos"] = SquidBossArena.TopLeft(),
                 ["SquidBossArenaSize"] = SquidBossArena.Size(),
                 ["PermafrostCenter"] = permafrostCenter,
@@ -191,6 +200,7 @@ namespace StarlightRiver
             VitricBiome.Width = (int)tag.Get<Vector2>("VitricBiomeSize").X;
             VitricBiome.Height = (int)tag.Get<Vector2>("VitricBiomeSize").Y;
 
+            SquidNPCProgress = tag.GetInt("SquidNPCProgress");
             SquidBossArena.X = (int)tag.Get<Vector2>("SquidBossArenaPos").X;
             SquidBossArena.Y = (int)tag.Get<Vector2>("SquidBossArenaPos").Y;
             SquidBossArena.Width = (int)tag.Get<Vector2>("SquidBossArenaSize").X;
@@ -220,18 +230,18 @@ namespace StarlightRiver
                 for (int i = (int)PureTiles[k].X - 16; i <= (int)PureTiles[k].X + 16; i++)
                     for (int j = (int)PureTiles[k].Y - 16; j <= (int)PureTiles[k].Y + 16; j++)
                     {
-                        Projectiles.Ability.Purifier.RevertTile(i, j);
-                    }              
+                        PurifyTransformation.RevertTile(i, j);
+                    }
 
             PureTiles.Clear();
 
             foreach (Key key in KeyInventory)
             {
-                GUI.KeyInventory.keys.Add(new GUI.KeyIcon(key, false));
+                Content.GUI.KeyInventory.keys.Add(new Content.GUI.KeyIcon(key, false));
             }
 
             //setup overlays
-            cathedralOverlay = new Cutaway(GetTexture("StarlightRiver/NPCs/Boss/SquidBoss/CathedralOver"), SquidBossArena.TopLeft() * 16);
+            cathedralOverlay = new Cutaway(GetTexture("StarlightRiver/Assets/Bosses/SquidBoss/CathedralOver"), SquidBossArena.TopLeft() * 16);
         }
 
         public static void LearnRecipie(string key)

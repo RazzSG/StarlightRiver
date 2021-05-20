@@ -1,8 +1,9 @@
-﻿using Microsoft.Xna.Framework;
-using StarlightRiver.Tiles.Vitric.Blocks;
-using Terraria;
-using Terraria.ModLoader;
+﻿using Terraria;
 using Terraria.ID;
+using Terraria.ModLoader;
+
+using StarlightRiver.Core;
+using StarlightRiver.Content.Tiles.Vitric;
 
 namespace StarlightRiver.Core
 {
@@ -33,5 +34,6 @@ namespace StarlightRiver.Core
             }
             return base.PreAI(npc);
         }
+
     }
 }
